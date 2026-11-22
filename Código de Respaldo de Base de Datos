@@ -1,0 +1,21 @@
+-- =============================================================================
+-- Respaldo de Base de Datos FarmaExpress Perú S.A.C.
+-- Esquema relacional de medicamentos, pedidos y stock central
+-- =============================================================================
+
+CREATE DATABASE IF NOT EXISTS farmaexpress_db;
+USE farmaexpress_db;
+
+CREATE TABLE IF NOT EXISTS inventario_medicamentos (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    presentacion VARCHAR(100),
+    precio DECIMAL(10,2) NOT NULL,
+    stock INT NOT NULL
+);
+
+INSERT INTO inventario_medicamentos (nombre, presentacion, precio, stock) VALUES
+('Paracetamol 500mg', 'Caja x 100 tab', 12.50, 450),
+('Amoxicilina 500mg', 'Caja x 20 cap', 28.00, 230),
+('Ibuprofeno 400mg', 'Caja x 50 tab', 18.00, 500),
+('Alcohol 70° (1 Litro)', 'Frasco antiséptico', 9.50, 180);
