@@ -1,0 +1,123 @@
+#!/bin/bash
+dnf update -y
+dnf install -y httpd
+systemctl start httpd
+systemctl enable httpd
+
+cat << 'EOF' > /var/www/html/index.html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>FarmaExpress Perú S.A.C.</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Arial, sans-serif; }
+body { background: #f8fafc; color: #1e293b; }
+.cloud-bar { background: #0f172a; color: white; padding: 10px 25px; font-size: 13px; display: flex; justify-content: space-between; border-bottom: 3px solid #38bdf8; }
+header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 2px 5px rgba(0,0,0,0.06); }
+.logo { font-size: 22px; font-weight: 800; color: #005a9c; display: flex; align-items: center; gap: 8px; }
+.search { width: 45%; padding: 10px 18px; border: 2px solid #cbd5e1; border-radius: 20px; outline: none; }
+.btn-cart { background: #00a859; color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: bold; }
+.container { max-width: 1000px; margin: 25px auto; padding: 0 15px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+.card { background: white; border-radius: 8px; border: 1px solid #e2e8f0; overflow: hidden; display: flex; flex-direction: column; }
+.card img { width: 100%; height: 135px; object-fit: cover; }
+.card-body { padding: 14px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+.price { font-size: 18px; font-weight: bold; color: #005a9c; margin: 10px 0; }
+.btn-add { background: #005a9c; color: white; border: none; padding: 9px; border-radius: 5px; font-weight: bold; cursor: pointer; width: 100%; }
+.modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
+.modal-box { background: white; width: 90%; max-width: 420px; border-radius: 8px; padding: 25px; }
+</style>
+</head>
+<body>
+<div class="cloud-bar">
+    <div><i class="fa-solid fa-server"></i> <strong>Instancia:</strong> EC2-FarmaExpress-Web02 | <i class="fa-solid fa-globe"></i> <strong>Zona:</strong> us-east-1b</div>
+    <div><span style="background:#0284c7; padding:3px 8px; border-radius:4px; font-weight:bold;">🔵 NODO 02 ACTIVO</span> <small style="margin-left:8px;">ALB OK | BD MySQL RDS | Sync OCI DR</small></div>
+</div>
+<header>
+    <div class="logo"><i class="fa-solid fa-prescription-bottle-medical" style="color:#00a859;"></i> FarmaExpress Perú</div>
+    <input type="text" id="find" class="search" placeholder="Buscar medicina..." onkeyup="filterProd()">
+    <button class="btn-cart" onclick="toggleCart()"><i class="fa-solid fa-cart-shopping"></i> Carrito (<span id="cCount">0</span>)</button>
+</header>
+<div class="container">
+    <div class="grid">
+        <div class="card">
+            <img src="https://images.unsplash.com/photo-1584308666744-24d5c474f2ae?w=400&q=80" alt="Paracetamol">
+            <div class="card-body">
+                <div><strong>Paracetamol 500mg</strong><br><small style="color:#64748b;">Caja x 100 tab</small></div>
+                <div class="price">S/ 12.50</div>
+                <button class="btn-add" onclick="addCart('Paracetamol 500mg', 12.50)">+ Agregar al Carrito</button>
+            </div>
+        </div>
+        <div class="card">
+            <img src="https://images.unsplash.com/photo-1576602976047-174e57a47881?w=400&q=80" alt="Amoxicilina">
+            <div class="card-body">
+                <div><strong>Amoxicilina 500mg</strong><br><small style="color:#64748b;">Caja x 20 cap</small></div>
+                <div class="price">S/ 28.00</div>
+                <button class="btn-add" onclick="addCart('Amoxicilina 500mg', 28.00)">+ Agregar al Carrito</button>
+            </div>
+        </div>
+        <div class="card">
+            <img src="https://images.unsplash.com/photo-1585435557343-3b092031a831?w=400&q=80" alt="Ibuprofeno">
+            <div class="card-body">
+                <div><strong>Ibuprofeno 400mg</strong><br><small style="color:#64748b;">Caja x 50 tab</small></div>
+                <div class="price">S/ 18.00</div>
+                <button class="btn-add" onclick="addCart('Ibuprofeno 400mg', 18.00)">+ Agregar al Carrito</button>
+            </div>
+        </div>
+        <div class="card">
+            <img src="https://images.unsplash.com/photo-1584744982491-665216d95f8b?w=400&q=80" alt="Alcohol">
+            <div class="card-body">
+                <div><strong>Alcohol 70° (1 Litro)</strong><br><small style="color:#64748b;">Frasco antiséptico</small></div>
+                <div class="price">S/ 9.50</div>
+                <button class="btn-add" onclick="addCart('Alcohol 70°', 9.50)">+ Agregar al Carrito</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal" id="cartM">
+    <div class="modal-box">
+        <h3><i class="fa-solid fa-cart-shopping"></i> Carrito de Medicamentos</h3>
+        <div id="cItems" style="margin:15px 0; max-height:160px; overflow-y:auto; border-bottom:1px solid #e2e8f0; padding-bottom:10px;">El carrito está vacío</div>
+        <div style="font-weight:bold; font-size:17px; margin-bottom:15px;">Total: <span id="cTotal">S/ 0.00</span></div>
+        <button class="btn-cart" style="width:100%; border-radius:6px;" onclick="buy()"><i class="fa-solid fa-check"></i> Confirmar Pedido en BD</button>
+        <button onclick="toggleCart()" style="width:100%; margin-top:8px; background:#e2e8f0; border:none; padding:8px; border-radius:6px; cursor:pointer;">Cerrar</button>
+    </div>
+</div>
+<script>
+var cart = [];
+function addCart(n, p) {
+    cart.push({nombre: n, precio: p});
+    document.getElementById("cCount").innerText = cart.length;
+    alert(n + " agregado al carrito exitosamente.");
+}
+function toggleCart() {
+    var m = document.getElementById("cartM");
+    m.style.display = (m.style.display === "flex") ? "none" : "flex";
+    var h = "", total = 0;
+    for (var i = 0; i < cart.length; i++) {
+        total += cart[i].precio;
+        h += '<div style="display:flex; justify-content:space-between; margin-bottom:6px;"><span>' + cart[i].nombre + '</span><strong>S/ ' + cart[i].precio.toFixed(2) + '</strong></div>';
+    }
+    document.getElementById("cItems").innerHTML = h || "El carrito está vacío";
+    document.getElementById("cTotal").innerText = "S/ " + total.toFixed(2);
+}
+function buy() {
+    if (cart.length === 0) return alert("Debe agregar medicamentos al carrito.");
+    alert("¡TRANSACCIÓN EXITOSA!\n\nSe confirmaron " + cart.length + " medicamentos.\nRegistrado en la Base de Datos MySQL (Subred 10.10.10.0/24) y sincronizado con Oracle Cloud (OCI DR).");
+    cart = [];
+    document.getElementById("cCount").innerText = 0;
+    toggleCart();
+}
+function filterProd() {
+    var q = document.getElementById("find").value.toLowerCase();
+    var cards = document.querySelectorAll(".card");
+    for (var i = 0; i < cards.length; i++) {
+        cards[i].style.display = (cards[i].innerText.toLowerCase().indexOf(q) > -1) ? "flex" : "none";
+    }
+}
+</script>
+</body>
+</html>
+EOF
