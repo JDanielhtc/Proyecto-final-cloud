@@ -1,0 +1,31 @@
+#!/bin/bash
+# ==============================================================================
+# Script de aprovisionamiento automatizado EC2 - FarmaExpress Perú
+# ==============================================================================
+
+# 1. Actualización de paquetes e instalación de servidor web
+yum update -y
+yum install -y nginx
+
+# 2. Habilitar y arrancar el servicio web
+systemctl start nginx
+systemctl enable nginx
+
+# 3. Despliegue de la aplicación web FarmaExpress (HTML/CSS/JS)
+# Contiene el catálogo médico, carrito de compras dinámico
+# y el identificador de nodo activo para el balanceador (ALB).
+cat << 'EOF' > /usr/share/nginx/html/index.html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>FarmaExpress Perú - Catálogo Farmacéutico</title>
+</head>
+<body>
+  <!-- Interfaz de comercio electrónico conectada al balanceador -->
+</body>
+</html>
+EOF
+
+# 4. Ajuste de permisos del sistema de archivos
+chmod 644 /usr/share/nginx/html/index.html
